@@ -1,0 +1,36 @@
+name: Publish project page
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare original-quality website
+        run: |
+          curl --fail --location --retry 3 https://github.com/windydauy/SP-HLM/releases/download/site-v1/SP-HLM-project-page.zip --output /tmp/site.zip
+          mkdir _site
+          unzip -q /tmp/site.zip -d _site
+          cp index.html styles.css site.js _site/
+          unzip -oq assets-images.zip -d _site
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
